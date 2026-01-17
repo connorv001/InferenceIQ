@@ -31,8 +31,8 @@ In the era of rapid GenAI adoption, organizations face unpredictable cost explos
 ## 🗺️ Roadmap
 
 ### Phase 1: Foundation (Current)
-- [ ] Core Instrumentation Wrappers
-- [ ] Basic Cost Data Ingestion (JSONL)
+- [x] Core Instrumentation Wrappers (OpenAI, Anthropic)
+- [x] Basic Cost Data Ingestion (JSONL)
 - [ ] Initial Compliance Gap Report
 
 ### Phase 2: Analytics & dashboard
@@ -50,7 +50,6 @@ In the era of rapid GenAI adoption, organizations face unpredictable cost explos
 ### Prerequisites
 - Python 3.10 or higher
 - `pip` package manager
-- Access to Kubernetes cluster (for infra tracking)
 
 ### Installation
 ```bash
@@ -60,7 +59,28 @@ pip install -r requirements.txt
 ```
 
 ### Usage
-*Coming soon...*
+
+```python
+from inferenceiq.tracker import GenAICostTracker
+
+# Initialize tracker
+tracker = GenAICostTracker(
+    api_key="your_api_key",
+    provider="openai",  # or "anthropic"
+    agent_name="billing_bot"
+)
+
+# Call LLM with automatic tracking
+messages = [{"role": "user", "content": "How much does a gram of gold cost?"}]
+response = tracker.call_llm(
+    model="gpt-4o",
+    messages=messages,
+    metadata={"customer_id": "cust_123", "session_id": "sess_abc"}
+)
+
+# Save logs to JSONL
+tracker.save_logs("data/interactions.jsonl")
+```
 
 ## 🤝 Contributing
 
