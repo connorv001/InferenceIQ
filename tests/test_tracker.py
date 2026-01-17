@@ -43,9 +43,53 @@ def test_log_interaction_and_save(tmp_path):
         saved_data = [json.loads(line) for line in f]
     assert saved_data[0] == interaction
 
+from unittest.mock import MagicMock, patch
+from inferenceiq.tracker import GenAICostTracker
+
 def test_save_empty_logs(tmp_path):
     tracker = GenAICostTracker(api_key="fake", provider="openai")
     log_file = tmp_path / "empty_logs.jsonl"
     saved_count = tracker.save_logs(str(log_file))
     assert saved_count == 0
     assert not log_file.exists()
+
+def test_call_openai_success():
+    tracker = GenAICostTracker(api_key="fake", provider="openai", agent_name="test_agent")
+    
+    mock_response = MagicMock()
+    mock_response.choices = [MagicMock()]
+    mock_response.choices[0].message.content = "Hello there!"
+    mock_response.usage.prompt_tokens = 10
+    mock_response.usage.completion_tokens = 20
+    
+    # Mock the client already created in __init__
+    tracker.client = MagicMock()
+    tracker.client.chat.completions.create.return_value = mock_response
+    
+    content = tracker.call_llm(model="gpt-4o", messages=[{"role": "user", "content": "hi"}])
+    
+    assert content == "Hello there!"
+    assert len(tracker.logs) == 1
+    log = tracker.logs[0]
+    assert log["model"] == "gpt-4o"
+    assert log["tokens_in"] == 10
+    assert log["tokens_out"] == 20
+    assert log["outcome"] == "success"
+    assert "latency_ms" in log
+    assert log["cost_inr"] > 0
+
+def test_call_openai_failure():
+    tracker = GenAICostTracker(api_key="fake", provider="openai")
+    
+    tracker.client = MagicMock()
+    tracker.client.chat.completions.create.side_effect = Exception("API Error")
+    
+    with pytest.raises(Exception, match="API Error"):
+        tracker.call_llm(model="gpt-4o", messages=[{"role": "user", "content": "hi"}])
+    
+    assert len(tracker.logs) == 1
+    log = tracker.logs[0]
+    assert log["outcome"] == "failed"
+    assert log["error"] == "API Error"
+    assert "latency_ms" in log
+
