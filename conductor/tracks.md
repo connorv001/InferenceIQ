@@ -4,5 +4,5 @@ This file tracks all major tracks for the project. Each track has its own detail
 
 ---
 
-- [ ] **Track: Implement core cost instrumentation for OpenAI and Anthropic with basic data logging**
+- [~] **Track: Implement core cost instrumentation for OpenAI and Anthropic with basic data logging**
   *Link: [./tracks/core_instrumentation_20260117/](./tracks/core_instrumentation_20260117/)*
