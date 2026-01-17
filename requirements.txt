@@ -3,3 +3,5 @@ anthropic
 pandas
 pytest
 pytest-cov
+plotly
+jinja2
