@@ -1,0 +1,56 @@
+import json
+import time
+from datetime import datetime
+
+class GenAICostTracker:
+    """Production-ready cost tracking wrapper for LLM APIs"""
+    
+    def __init__(self, api_key, provider="openai", agent_name="default"):
+        self.api_key = api_key
+        self.provider = provider
+        self.agent_name = agent_name
+        self.logs = []
+        
+        # ✅ LATEST PRICING (January 2026) - Update from official pricing pages
+        self.PRICING_INR = {
+            # OpenAI
+            "gpt-4o": {"input": 0.0020750, "output": 0.0083000},  # $2.50/$10 * 83
+            "gpt-4o-mini": {"input": 0.0001245, "output": 0.0004980},  # $0.15/$0.60 * 83
+            "gpt-4-turbo": {"input": 0.0083000, "output": 0.0249000},  # $10/$30 * 83
+            "o1": {"input": 0.0124500, "output": 0.0498000},  # $15/$60 * 83
+            
+            # Anthropic
+            "claude-3-5-sonnet-20241022": {"input": 0.0024900, "output": 0.0124500},  # $3/$15 * 83
+            "claude-3-opus-20240229": {"input": 0.0124500, "output": 0.0622500},  # $15/$75 * 83
+            "claude-3-haiku-20240307": {"input": 0.0002075, "output": 0.0010375},  # $0.25/$1.25 * 83
+            
+            # AWS Bedrock (same models, AWS pricing)
+            "anthropic.claude-3-5-sonnet-20241022-v2:0": {"input": 0.0024900, "output": 0.0124500},
+            "anthropic.claude-3-haiku-20240307-v1:0": {"input": 0.0002075, "output": 0.0010375},
+        }
+
+    def calculate_cost(self, model, tokens_in, tokens_out):
+        """Calculate cost in INR based on model and token usage"""
+        pricing = self.PRICING_INR.get(model, {})
+        cost_inr = (
+            tokens_in * pricing.get("input", 0) + 
+            tokens_out * pricing.get("output", 0)
+        )
+        return cost_inr
+
+    def log_interaction(self, interaction_data):
+        """Store interaction data in the internal buffer"""
+        self.logs.append(interaction_data)
+
+    def save_logs(self, filename="genai_costs.jsonl"):
+        """Append logs to JSONL file"""
+        if not self.logs:
+            return 0
+            
+        with open(filename, 'a') as f:
+            for log in self.logs:
+                f.write(json.dumps(log) + '\n')
+        
+        saved_count = len(self.logs)
+        self.logs = []
+        return saved_count
