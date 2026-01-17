@@ -121,6 +121,11 @@ class GenAICostTracker:
         if not self.logs:
             return 0
             
+        import os
+        directory = os.path.dirname(filename)
+        if directory and not os.path.exists(directory):
+            os.makedirs(directory, exist_ok=True)
+            
         with open(filename, 'a') as f:
             for log in self.logs:
                 f.write(json.dumps(log) + '\n')

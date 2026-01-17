@@ -93,3 +93,15 @@ def test_call_openai_failure():
     assert log["error"] == "API Error"
     assert "latency_ms" in log
 
+def test_save_logs_nested_directory(tmp_path):
+    tracker = GenAICostTracker(api_key="fake", provider="openai")
+    tracker.log_interaction({"test": "data"})
+    
+    # Nested directory
+    log_file = tmp_path / "subdir" / "logs" / "test_logs.jsonl"
+    
+    saved_count = tracker.save_logs(str(log_file))
+    assert saved_count == 1
+    assert log_file.exists()
+
+

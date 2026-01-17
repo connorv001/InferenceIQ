@@ -1,0 +1,1 @@
+{"timestamp": "2026-01-17T19:30:19.999421", "interaction_id": "int_1768678219999", "agent": "phase2_verifier", "model": "claude-3-5-sonnet-20241022", "tokens_in": 100, "tokens_out": 50, "tokens_total": 150, "cost_inr": 0.8715, "latency_ms": 0.13, "outcome": "success"}
