@@ -1,29 +1,75 @@
 import pytest
-import os
-from inferenceiq.analytics import AnalyticsEngine
+import pandas as pd
+from unittest.mock import MagicMock
 from inferenceiq.dashboard import DashboardGenerator
+from inferenceiq.analytics import AnalyticsEngine
 
 @pytest.fixture
-def mock_analytics(tmp_path):
-    log_file = tmp_path / "test_logs.jsonl"
-    with open(log_file, "w") as f:
-        f.write('{"timestamp": "2026-01-01T10:00:00", "model": "gpt-4o", "cost_inr": 10.0, "tokens_in": 100, "tokens_out": 200, "tokens_total": 300, "outcome": "success"}\n')
-        f.write('{"timestamp": "2026-01-02T10:00:00", "model": "claude", "cost_inr": 5.0, "tokens_in": 50, "tokens_out": 50, "tokens_total": 100, "outcome": "success"}\n')
+def mock_analytics_engine():
+    """Creates a mock AnalyticsEngine with sample data."""
+    engine = MagicMock(spec=AnalyticsEngine)
     
-    engine = AnalyticsEngine(log_file=str(log_file))
-    engine.load_data()
+    # Mock DataFrame
+    engine.df = pd.DataFrame({
+        'model': ['gpt-4', 'gpt-3.5', 'gpt-4'],
+        'cost_inr': [10.0, 5.0, 10.0],
+        'outcome': ['success', 'success', 'failure'],
+        'tokens_total': [100, 50, 100],
+        'timestamp': pd.to_datetime(['2024-01-01', '2024-01-01', '2024-01-02'])
+    })
+    
+    # Mock methods
+    engine.get_total_cost.return_value = 25.0
+    engine.get_success_rate.return_value = 66.6
+    engine.get_token_usage_stats.return_value = {'grand_total': 250}
+    engine.get_cost_by_model.return_value = {'gpt-4': 20.0, 'gpt-3.5': 5.0}
+    engine.get_daily_trend.return_value = {'2024-01-01': 15.0, '2024-01-02': 10.0}
+    
     return engine
 
-def test_generate_dashboard(mock_analytics, tmp_path):
-    output_file = tmp_path / "dashboard.html"
-    generator = DashboardGenerator(mock_analytics)
+def test_generate_report_creates_file(mock_analytics_engine, tmp_path):
+    """Test that generate_report creates a file."""
+    output_file = tmp_path / "test_dashboard.html"
     
-    path = generator.generate(output_path=str(output_file))
+    dashboard = DashboardGenerator(mock_analytics_engine)
+    dashboard.generate_report(str(output_file))
     
-    assert os.path.exists(path)
-    with open(path, "r") as f:
-        content = f.read()
-        assert "InferenceIQ Dashboard" in content
-        assert "Total Spend" in content
-        assert "₹15.00" in content  # 10 + 5
-        assert "plotly" in content  # Ensure charts are embedded
+    assert output_file.exists()
+    assert output_file.stat().st_size > 0
+
+def test_generate_report_content(mock_analytics_engine, tmp_path):
+    """Test that the generated report contains expected data."""
+    output_file = tmp_path / "test_dashboard.html"
+    
+    dashboard = DashboardGenerator(mock_analytics_engine)
+    dashboard.generate_report(str(output_file))
+    
+    content = output_file.read_text()
+    
+    # Check for stats
+    assert "₹25.00" in content
+    assert "66.6%" in content
+    assert "250" in content
+    
+    # Check for charts (Plotly classes/IDs)
+    assert "plotly-graph-div" in content
+    assert "Cost Distribution by Model" in content
+    assert "Daily Cost Trend" in content
+
+def test_empty_data_handling(tmp_path):
+    """Test that dashboard handles empty data gracefully."""
+    empty_engine = MagicMock(spec=AnalyticsEngine)
+    empty_engine.df = pd.DataFrame()
+    empty_engine.get_total_cost.return_value = 0.0
+    empty_engine.get_success_rate.return_value = 0.0
+    empty_engine.get_token_usage_stats.return_value = {'grand_total': 0}
+    empty_engine.get_cost_by_model.return_value = {}
+    empty_engine.get_daily_trend.return_value = {}
+
+    output_file = tmp_path / "empty_dashboard.html"
+    dashboard = DashboardGenerator(empty_engine)
+    dashboard.generate_report(str(output_file))
+    
+    content = output_file.read_text()
+    assert "₹0.00" in content
+    assert "No Data" in content

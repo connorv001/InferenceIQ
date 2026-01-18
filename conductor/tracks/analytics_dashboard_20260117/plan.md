@@ -9,12 +9,12 @@
 - [x] **Checkpoint:** Commit SHA: `4b82464`
 
 ## Phase 2: Dashboard Generation
-- [ ] **Goal:** Generate the HTML report.
-- [ ] **Step 1:** Create `src/inferenceiq/dashboard.py`.
-- [ ] **Step 2:** Use Plotly to generate interactive figures from `AnalyticsEngine` data.
-- [ ] **Step 3:** Create a Jinja2 template for the dashboard layout.
-- [ ] **Step 4:** Implement `generate_report(output_path)` to render the HTML.
-- [ ] **Verification:** Manual verification of the generated HTML file.
+- [x] **Goal:** Generate the HTML report.
+- [x] **Step 1:** Create `src/inferenceiq/dashboard.py`.
+- [x] **Step 2:** Use Plotly to generate interactive figures from `AnalyticsEngine` data.
+- [x] **Step 3:** Create a Jinja2 template for the dashboard layout.
+- [x] **Step 4:** Implement `generate_report(output_path)` to render the HTML.
+- [x] **Verification:** Manual verification of the generated HTML file.
 
 ## Phase 3: Integration
 - [ ] **Goal:** CLI or script to run the dashboard generation.

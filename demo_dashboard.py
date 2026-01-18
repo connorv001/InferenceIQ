@@ -48,6 +48,7 @@ if __name__ == "__main__":
     
     print("Generating dashboard...")
     gen = DashboardGenerator(engine)
-    output = gen.generate("dashboard_demo.html")
+    output_path = "dashboard_demo.html"
+    gen.generate_report(output_path)
     
-    print(f"Dashboard generated at: {output}")
+    print(f"Dashboard generated at: {output_path}")
