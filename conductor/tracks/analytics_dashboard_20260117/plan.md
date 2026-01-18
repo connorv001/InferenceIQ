@@ -17,6 +17,6 @@
 - [x] **Verification:** Manual verification of the generated HTML file.
 
 ## Phase 3: Integration
-- [ ] **Goal:** CLI or script to run the dashboard generation.
-- [ ] **Step 1:** Create a simple CLI script `generate_dashboard.py` (or add to `main.py` if exists).
-- [ ] **Verification:** End-to-end run: Generate logs -> Run script -> Open Dashboard.
+- [x] **Goal:** CLI or script to run the dashboard generation.
+- [x] **Step 1:** Create a simple CLI script `generate_dashboard.py` (or add to `main.py` if exists).
+- [x] **Verification:** End-to-end run: Generate logs -> Run script -> Open Dashboard.
