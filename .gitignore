@@ -143,5 +143,4 @@ dmypy.json
 *.jsonl
 data/
 
-# User Request
-venv/
+
