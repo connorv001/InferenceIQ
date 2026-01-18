@@ -6,6 +6,7 @@
 - [x] **Step 2:** Implement `load_data()` to read JSONL logs into Pandas.
 - [x] **Step 3:** Implement aggregation methods (`get_cost_by_model`, `get_daily_spend`, `get_latency_stats`).
 - [x] **Step 4:** Write unit tests in `tests/test_analytics.py`.
+- [x] **Checkpoint:** Commit SHA: `4b82464`
 
 ## Phase 2: Dashboard Generation
 - [ ] **Goal:** Generate the HTML report.
