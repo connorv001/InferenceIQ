@@ -6,7 +6,11 @@ __pycache__/
 # C extensions
 *.so
 
+
+
 # Distribution / packaging
+
+venv/*
 .Python
 build/
 develop-eggs/
@@ -138,3 +142,6 @@ dmypy.json
 # Data files
 *.jsonl
 data/
+
+# User Request
+venv/

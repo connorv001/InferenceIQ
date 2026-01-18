@@ -2,10 +2,10 @@
 
 ## Phase 1: Analytics Engine & Data Processing
 - [ ] **Goal:** Create a robust `AnalyticsEngine` class to process logs.
-- [ ] **Step 1:** Create `src/inferenceiq/analytics.py`.
-- [ ] **Step 2:** Implement `load_data()` to read JSONL logs into Pandas.
-- [ ] **Step 3:** Implement aggregation methods (`get_cost_by_model`, `get_daily_spend`, `get_latency_stats`).
-- [ ] **Step 4:** Write unit tests in `tests/test_analytics.py`.
+- [x] **Step 1:** Create `src/inferenceiq/analytics.py`.
+- [x] **Step 2:** Implement `load_data()` to read JSONL logs into Pandas.
+- [x] **Step 3:** Implement aggregation methods (`get_cost_by_model`, `get_daily_spend`, `get_latency_stats`).
+- [x] **Step 4:** Write unit tests in `tests/test_analytics.py`.
 
 ## Phase 2: Dashboard Generation
 - [ ] **Goal:** Generate the HTML report.
