@@ -11,4 +11,4 @@ This file tracks all major tracks for the project. Each track has its own detail
   *Link: [./tracks/analytics_dashboard_20260117/](./tracks/analytics_dashboard_20260117/)*
 
 - [ ] **Track: Advanced Features (Phase 3)**
-  *Link: TBD*
+  *Link: [./tracks/advanced_features_20260119/](./tracks/advanced_features_20260119/)*

@@ -2,6 +2,7 @@ import pandas as pd
 import json
 import os
 from typing import Dict, Any, List, Optional
+from inferenceiq.tracker import GenAICostTracker
 
 class AnalyticsEngine:
     """Core engine for processing GenAI cost logs and generating metrics."""
@@ -9,6 +10,11 @@ class AnalyticsEngine:
     def __init__(self, log_file: str = "genai_costs.jsonl"):
         self.log_file = log_file
         self.df = pd.DataFrame()
+        # Initialize a dummy tracker to access pricing data
+        try:
+            self._pricing_ref = GenAICostTracker(api_key="dummy", provider="openai").PRICING_INR
+        except:
+            self._pricing_ref = {}
 
     def load_data(self) -> pd.DataFrame:
         """Load data from JSONL file into Pandas DataFrame."""
@@ -17,7 +23,8 @@ class AnalyticsEngine:
             self.df = pd.DataFrame(columns=[
                 "timestamp", "interaction_id", "agent", "model", 
                 "tokens_in", "tokens_out", "tokens_total", 
-                "cost_inr", "latency_ms", "outcome", "error"
+                "cost_inr", "latency_ms", "outcome", "error",
+                "fingerprint", "user_id", "session_id", "tags"
             ])
             return self.df
 
@@ -77,3 +84,51 @@ class AnalyticsEngine:
         total = len(self.df)
         success = len(self.df[self.df["outcome"] == "success"])
         return (success / total) * 100
+
+    def get_failure_stats(self) -> Dict[str, Any]:
+        """Get failure counts and rate."""
+        if self.df.empty:
+            return {"count": 0, "rate": 0.0}
+        
+        failed = len(self.df[self.df["outcome"] == "failed"])
+        total = len(self.df)
+        rate = (failed / total) * 100 if total > 0 else 0.0
+        
+        return {"count": failed, "rate": round(rate, 2)}
+
+    def calculate_potential_cache_savings(self) -> Dict[str, float]:
+        """Estimate savings from caching duplicate prompts.
+        Assumes 90% savings on input tokens for cache hits.
+        """
+        if self.df.empty or "fingerprint" not in self.df.columns:
+            return {"potential_savings": 0.0, "duplicate_count": 0}
+            
+        # Filter for success calls only
+        success_df = self.df[self.df["outcome"] == "success"].copy()
+        
+        if success_df.empty:
+             return {"potential_savings": 0.0, "duplicate_count": 0}
+
+        # Identify duplicates (subsequent calls)
+        duplicates = success_df[success_df.duplicated(subset=['fingerprint'], keep='first')]
+        
+        potential_savings = 0.0
+        duplicate_count = len(duplicates)
+        
+        for _, row in duplicates.iterrows():
+            model = row['model']
+            tokens_in = row.get('tokens_in', 0)
+            
+            # Calculate input cost for this call
+            model_price = self._pricing_ref.get(model, {})
+            input_rate = model_price.get("input", 0)
+            
+            input_cost = tokens_in * input_rate
+            
+            # Assume 90% savings
+            potential_savings += (input_cost * 0.90)
+            
+        return {
+            "potential_savings": round(potential_savings, 4),
+            "duplicate_count": duplicate_count
+        }

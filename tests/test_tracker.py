@@ -1,5 +1,6 @@
 import pytest
 import json
+from unittest.mock import MagicMock
 from inferenceiq.tracker import GenAICostTracker
 
 def test_calculate_cost_openai():
@@ -42,9 +43,6 @@ def test_log_interaction_and_save(tmp_path):
     with open(log_file, 'r') as f:
         saved_data = [json.loads(line) for line in f]
     assert saved_data[0] == interaction
-
-from unittest.mock import MagicMock, patch
-from inferenceiq.tracker import GenAICostTracker
 
 def test_save_empty_logs(tmp_path):
     tracker = GenAICostTracker(api_key="fake", provider="openai")
@@ -91,6 +89,7 @@ def test_call_openai_failure():
     log = tracker.logs[0]
     assert log["outcome"] == "failed"
     assert log["error"] == "API Error"
+    assert log["error_type"] == "Exception"
     assert "latency_ms" in log
 
 def test_save_logs_nested_directory(tmp_path):
@@ -104,4 +103,49 @@ def test_save_logs_nested_directory(tmp_path):
     assert saved_count == 1
     assert log_file.exists()
 
+def test_call_with_compliance_metadata():
+    tracker = GenAICostTracker(api_key="fake", provider="openai")
+    
+    mock_response = MagicMock()
+    mock_response.choices = [MagicMock()]
+    mock_response.choices[0].message.content = "Response"
+    mock_response.usage.prompt_tokens = 5
+    mock_response.usage.completion_tokens = 5
+    
+    tracker.client = MagicMock()
+    tracker.client.chat.completions.create.return_value = mock_response
+    
+    tracker.call_llm(
+        model="gpt-4o", 
+        messages=[{"role": "user", "content": "hi"}],
+        user_id="user_123",
+        session_id="sess_abc",
+        tags=["prod", "test"]
+    )
+    
+    assert len(tracker.logs) == 1
+    log = tracker.logs[0]
+    assert log["user_id"] == "user_123"
+    assert log["session_id"] == "sess_abc"
+    assert log["tags"] == ["prod", "test"]
 
+def test_call_failure_with_metadata():
+    tracker = GenAICostTracker(api_key="fake", provider="openai")
+    
+    tracker.client = MagicMock()
+    tracker.client.chat.completions.create.side_effect = ValueError("Invalid input")
+    
+    with pytest.raises(ValueError):
+        tracker.call_llm(
+            model="gpt-4o", 
+            messages=[],
+            user_id="user_err",
+            tags=["error_test"]
+        )
+        
+    assert len(tracker.logs) == 1
+    log = tracker.logs[0]
+    assert log["outcome"] == "failed"
+    assert log["error_type"] == "ValueError"
+    assert log["user_id"] == "user_err"
+    assert log["tags"] == ["error_test"]

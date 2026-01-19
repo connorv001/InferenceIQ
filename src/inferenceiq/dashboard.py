@@ -39,7 +39,7 @@ class DashboardGenerator:
             }
             .stats-grid {
                 display: grid;
-                grid-template-columns: repeat(3, 1fr);
+                grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
                 gap: 20px;
                 margin-bottom: 40px;
             }
@@ -61,6 +61,11 @@ class DashboardGenerator:
                 font-size: 2rem;
                 font-weight: bold;
                 color: #f8fafc;
+            }
+            .card .subtext {
+                font-size: 0.8rem;
+                color: #64748b;
+                margin-top: 5px;
             }
             .charts-grid {
                 display: grid;
@@ -89,6 +94,16 @@ class DashboardGenerator:
                 <div class="card">
                     <h3>Success Rate</h3>
                     <div class="value">{{ "%.1f"|format(success_rate) }}%</div>
+                </div>
+                <div class="card">
+                    <h3>Failure Rate</h3>
+                    <div class="value" style="color: #ef4444;">{{ "%.1f"|format(failure_rate) }}%</div>
+                    <div class="subtext">{{ failure_count }} Failed Calls</div>
+                </div>
+                <div class="card">
+                    <h3>Potential Savings</h3>
+                    <div class="value" style="color: #22c55e;">₹{{ "%.2f"|format(potential_savings) }}</div>
+                    <div class="subtext">From {{ duplicate_count }} Duplicates</div>
                 </div>
                 <div class="card">
                     <h3>Total Tokens</h3>
@@ -167,6 +182,15 @@ class DashboardGenerator:
         success_rate = self.engine.get_success_rate()
         tokens = self.engine.get_token_usage_stats()
         total_tokens = tokens.get('grand_total', 0)
+        
+        # New Metrics
+        failure_stats = self.engine.get_failure_stats()
+        failure_rate = failure_stats.get('rate', 0.0)
+        failure_count = failure_stats.get('count', 0)
+        
+        cache_stats = self.engine.calculate_potential_cache_savings()
+        potential_savings = cache_stats.get('potential_savings', 0.0)
+        duplicate_count = cache_stats.get('duplicate_count', 0)
 
         # Generate Charts
         plot_cost_by_model = self._generate_cost_by_model_chart()
@@ -177,6 +201,10 @@ class DashboardGenerator:
         html_content = template.render(
             total_cost=total_cost,
             success_rate=success_rate,
+            failure_rate=failure_rate,
+            failure_count=failure_count,
+            potential_savings=potential_savings,
+            duplicate_count=duplicate_count,
             total_tokens=total_tokens,
             plot_cost_by_model=plot_cost_by_model,
             plot_daily_trend=plot_daily_trend

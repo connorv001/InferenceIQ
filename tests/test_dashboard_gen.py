@@ -25,6 +25,10 @@ def mock_analytics_engine():
     engine.get_cost_by_model.return_value = {'gpt-4': 20.0, 'gpt-3.5': 5.0}
     engine.get_daily_trend.return_value = {'2024-01-01': 15.0, '2024-01-02': 10.0}
     
+    # New mocks
+    engine.get_failure_stats.return_value = {'count': 1, 'rate': 33.3}
+    engine.calculate_potential_cache_savings.return_value = {'potential_savings': 5.50, 'duplicate_count': 2}
+    
     return engine
 
 def test_generate_report_creates_file(mock_analytics_engine, tmp_path):
@@ -51,6 +55,12 @@ def test_generate_report_content(mock_analytics_engine, tmp_path):
     assert "66.6%" in content
     assert "250" in content
     
+    # Check for new stats
+    assert "33.3%" in content # Failure Rate
+    assert "1 Failed Calls" in content
+    assert "₹5.50" in content # Potential Savings
+    assert "From 2 Duplicates" in content
+    
     # Check for charts (Plotly classes/IDs)
     assert "plotly-graph-div" in content
     assert "Cost Distribution by Model" in content
@@ -65,6 +75,10 @@ def test_empty_data_handling(tmp_path):
     empty_engine.get_token_usage_stats.return_value = {'grand_total': 0}
     empty_engine.get_cost_by_model.return_value = {}
     empty_engine.get_daily_trend.return_value = {}
+    
+    # New mocks for empty
+    empty_engine.get_failure_stats.return_value = {'count': 0, 'rate': 0.0}
+    empty_engine.calculate_potential_cache_savings.return_value = {'potential_savings': 0.0, 'duplicate_count': 0}
 
     output_file = tmp_path / "empty_dashboard.html"
     dashboard = DashboardGenerator(empty_engine)

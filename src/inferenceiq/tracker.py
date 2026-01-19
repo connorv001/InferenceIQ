@@ -47,10 +47,29 @@ class GenAICostTracker:
         )
         return cost_inr
 
-    def call_llm(self, model, messages, max_tokens=None, metadata=None):
-        """Unified LLM call with automatic cost tracking"""
+    def _compute_fingerprint(self, messages):
+        """Generate a hash of the input messages for duplicate detection"""
+        try:
+            # Sort keys to ensure deterministic string representation
+            import hashlib
+            serialized = json.dumps(messages, sort_keys=True)
+            return hashlib.md5(serialized.encode()).hexdigest()
+        except Exception:
+            return "unknown"
+
+    def call_llm(self, model, messages, max_tokens=None, metadata=None, user_id=None, session_id=None, tags=None):
+        """Unified LLM call with automatic cost tracking and compliance logging"""
         start_time = time.time()
         interaction_id = f"int_{int(time.time() * 1000)}"
+        fingerprint = self._compute_fingerprint(messages)
+        
+        # Prepare compliance metadata
+        compliance_data = {
+            "user_id": user_id,
+            "session_id": session_id,
+            "tags": tags or [],
+            "fingerprint": fingerprint
+        }
         
         try:
             if self.provider == "openai":
@@ -91,6 +110,7 @@ class GenAICostTracker:
                 "cost_inr": round(cost_inr, 4),
                 "latency_ms": round(latency_ms, 2),
                 "outcome": "success",
+                **compliance_data,
                 **(metadata or {}),
             }
             
@@ -105,8 +125,10 @@ class GenAICostTracker:
                 "agent": self.agent_name,
                 "model": model,
                 "outcome": "failed",
+                "error_type": type(e).__name__,
                 "error": str(e),
                 "latency_ms": round(latency_ms, 2),
+                **compliance_data,
                 **(metadata or {}),
             }
             self.log_interaction(log_entry)
